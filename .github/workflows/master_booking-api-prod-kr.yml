@@ -23,12 +23,21 @@ jobs:
         with:
           dotnet-version: '8.x'
 
+      - name: Find Booking.Api project
+        run: |
+          echo "Searching for Booking.Api.csproj..."
+          find . -name "Booking.Api.csproj" -print
+          API_CSPROJ=$(find . -name "Booking.Api.csproj" -print -quit)
+          echo "API_CSPROJ=$API_CSPROJ" >> $GITHUB_ENV
+          echo "Found: $API_CSPROJ"
+      
       - name: Build with dotnet
-        run: dotnet build $(find . -name "Booking.Api.csproj" | head -n 1) --configuration Release
+        run: dotnet build "$API_CSPROJ" --configuration Release
 
 
       - name: dotnet publish
-        run: dotnet publish $(find . -name "Booking.Api.csproj" | head -n 1) -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish "$API_CSPROJ" -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
 
 
       - name: Upload artifact for deployment job
@@ -66,6 +75,7 @@ jobs:
           package: .
 
           
+
 
 
 
