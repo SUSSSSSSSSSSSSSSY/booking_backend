@@ -24,10 +24,12 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Build with dotnet
-        run: dotnet build booking_backend/src/Booking.Api/Booking.Api.csproj --configuration Release
+        run: dotnet build $(find . -name "Booking.Api.csproj" | head -n 1) --configuration Release
+
 
       - name: dotnet publish
-        run: dotnet publish booking_backend/src/Booking.Api/Booking.Api.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish $(find . -name "Booking.Api.csproj" | head -n 1) -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
