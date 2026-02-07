@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy ASP.Net Core app to Azure Web App - booking-api-prod-kr
 
 on:
@@ -13,52 +10,55 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
       - name: Find Booking.Api project
+        shell: bash
         run: |
           echo "Searching for Booking.Api.csproj..."
           find . -name "Booking.Api.csproj" -print
           API_CSPROJ=$(find . -name "Booking.Api.csproj" -print -quit)
+          if [ -z "$API_CSPROJ" ]; then
+            echo "Booking.Api.csproj not found!" >&2
+            exit 1
+          fi
           echo "API_CSPROJ=$API_CSPROJ" >> $GITHUB_ENV
           echo "Found: $API_CSPROJ"
-      
-      - name: Build with dotnet
-        run: dotnet build "$API_CSPROJ" --configuration Release
 
+      - name: Build (Booking.Api)
+        run: dotnet build "${{ env.API_CSPROJ }}" --configuration Release
 
-      - name: dotnet publish
-        run: dotnet publish "$API_CSPROJ" -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      - name: Publish (Booking.Api)
+        run: dotnet publish "${{ env.API_CSPROJ }}" -c Release -o ${{ runner.temp }}/publish_api
 
-
-
-      - name: Upload artifact for deployment job
+      - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          name: api_publish
+          path: ${{ runner.temp }}/publish_api
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
-      
+          name: api_publish
+          path: api_publish
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -67,15 +67,8 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CB129D52C8EF4176B8D3CD98D9CDE4C5 }}
 
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'booking-api-prod-kr'
           slot-name: 'Production'
-          package: .
-
-          
-
-
-
-
+          package: api_publish
