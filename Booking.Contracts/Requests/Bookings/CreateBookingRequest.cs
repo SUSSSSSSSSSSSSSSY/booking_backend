@@ -8,7 +8,6 @@ namespace Booking.Contracts.Requests.Bookings;
 
 public class CreateBookingRequest
 {
-    public string UserId { get; set; } = default!;
     public string HotelId { get; set; } = default!;
     public string RoomId { get; set; } = default!;
     public string CheckIn { get; set; } = default!;

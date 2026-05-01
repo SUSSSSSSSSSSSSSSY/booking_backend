@@ -1,52 +1,110 @@
 ﻿using Booking.Application.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
-public class UsersController(IUserService userService) : ControllerBase
+public class UsersController(
+    IUserService userService,
+    ICurrentUserService currentUser) : ControllerBase
 {
-    [HttpGet("{userId}")]
-    public async Task<IActionResult> GetById(string userId, CancellationToken cancellationToken)
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
     {
-        var user = await userService.GetByIdAsync(userId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(currentUser.UserId))
+        {
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
+        var user = await userService.GetByIdAsync(currentUser.UserId, cancellationToken);
+
         if (user is null)
         {
-            return NotFound();
+            return NotFound(new { message = "User not found." });
         }
 
         return Ok(user);
     }
 
-    [HttpGet("{userId}/favorites")]
-    public async Task<IActionResult> GetFavorites(string userId, CancellationToken cancellationToken)
+    [Authorize]
+    [HttpGet("me/favorites")]
+    public async Task<IActionResult> GetMyFavorites(CancellationToken cancellationToken)
     {
-        var favorites = await userService.GetFavoritesAsync(userId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(currentUser.UserId))
+        {
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
+        var favorites = await userService.GetFavoritesAsync(currentUser.UserId, cancellationToken);
         return Ok(favorites);
     }
 
-    [HttpPost("{userId}/favorites/{hotelId}")]
-    public async Task<IActionResult> AddFavorite(string userId, string hotelId, CancellationToken cancellationToken)
+    [Authorize]
+    [HttpPost("me/favorites/{hotelId}")]
+    public async Task<IActionResult> AddMyFavorite(
+        string hotelId,
+        CancellationToken cancellationToken)
     {
-        var ok = await userService.AddFavoriteAsync(userId, hotelId, cancellationToken);
-        if (!ok)
+        if (string.IsNullOrWhiteSpace(currentUser.UserId))
         {
-            return NotFound();
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
+        var result = await userService.AddFavoriteAsync(
+            currentUser.UserId,
+            hotelId,
+            cancellationToken);
+
+        if (!result)
+        {
+            return NotFound(new { message = "User or hotel not found." });
         }
 
         return NoContent();
     }
 
-    [HttpDelete("{userId}/favorites/{hotelId}")]
-    public async Task<IActionResult> RemoveFavorite(string userId, string hotelId, CancellationToken cancellationToken)
+    [Authorize]
+    [HttpDelete("me/favorites/{hotelId}")]
+    public async Task<IActionResult> RemoveMyFavorite(
+        string hotelId,
+        CancellationToken cancellationToken)
     {
-        var ok = await userService.RemoveFavoriteAsync(userId, hotelId, cancellationToken);
-        if (!ok)
+        if (string.IsNullOrWhiteSpace(currentUser.UserId))
         {
-            return NotFound();
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
+        var result = await userService.RemoveFavoriteAsync(
+            currentUser.UserId,
+            hotelId,
+            cancellationToken);
+
+        if (!result)
+        {
+            return NotFound(new { message = "User or hotel not found." });
         }
 
         return NoContent();
+    }
+
+    // временно можешь оставить старый endpoint для совместимости,
+    // но лучше пометить как obsolete
+    [HttpGet("{userId}")]
+    [Obsolete("Use GET /api/users/me instead.")]
+    public async Task<IActionResult> GetById(
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        var user = await userService.GetByIdAsync(userId, cancellationToken);
+
+        if (user is null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+
+        return Ok(user);
     }
 }

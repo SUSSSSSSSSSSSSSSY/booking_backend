@@ -17,6 +17,5 @@ public class InMemoryStore
     public List<AppUser> Users { get; } = [];
     public List<HotelBooking> Bookings { get; } = [];
 
-    public Dictionary<string, AccessSession> AccessSessions { get; } = new();
-    public Dictionary<string, RefreshSession> RefreshSessions { get; } = new();
+    public List<UserRefreshToken> RefreshTokens { get; } = [];
 }

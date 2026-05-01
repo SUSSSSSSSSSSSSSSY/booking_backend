@@ -14,7 +14,9 @@ namespace Booking.Infrastructure.Services;
 
 public class BookingService(InMemoryStore store) : IBookingService
 {
-    public Task<IReadOnlyList<BookingDto>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<BookingDto>> GetByUserIdAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
     {
         var result = store.Bookings
             .Where(x => x.UserId == userId)
@@ -25,13 +27,42 @@ public class BookingService(InMemoryStore store) : IBookingService
         return Task.FromResult<IReadOnlyList<BookingDto>>(result);
     }
 
-    public Task<BookingDto> CreateAsync(CreateBookingRequest request, CancellationToken cancellationToken = default)
+    public Task<BookingDto> CreateAsync(
+        string userId,
+        CreateBookingRequest request,
+        CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new InvalidOperationException("User id is required.");
+        }
+
         var checkIn = DateOnly.Parse(request.CheckIn);
         var checkOut = DateOnly.Parse(request.CheckOut);
 
-        var hotel = store.Hotels.First(x => x.Id == request.HotelId);
-        var room = hotel.Rooms.First(x => x.Id == request.RoomId);
+        if (checkOut <= checkIn)
+        {
+            throw new InvalidOperationException("Check-out date must be after check-in date.");
+        }
+
+        if (request.Guests <= 0)
+        {
+            throw new InvalidOperationException("Guests count must be greater than zero.");
+        }
+
+        var hotel = store.Hotels.FirstOrDefault(x => x.Id == request.HotelId);
+
+        if (hotel is null)
+        {
+            throw new InvalidOperationException("Hotel not found.");
+        }
+
+        var room = hotel.Rooms.FirstOrDefault(x => x.Id == request.RoomId);
+
+        if (room is null)
+        {
+            throw new InvalidOperationException("Room not found.");
+        }
 
         var nights = checkOut.DayNumber - checkIn.DayNumber;
         var totalPrice = room.Price * nights;
@@ -39,7 +70,7 @@ public class BookingService(InMemoryStore store) : IBookingService
         var booking = new HotelBooking
         {
             Id = $"bok_{Guid.NewGuid():N}"[..12],
-            UserId = request.UserId,
+            UserId = userId,
             HotelId = request.HotelId,
             RoomId = request.RoomId,
             CheckIn = checkIn,
@@ -55,12 +86,23 @@ public class BookingService(InMemoryStore store) : IBookingService
         return Task.FromResult(booking.ToDto());
     }
 
-    public Task<bool> CancelAsync(string bookingId, CancellationToken cancellationToken = default)
+    public Task<bool> CancelAsync(
+        string userId,
+        string bookingId,
+        CancellationToken cancellationToken = default)
     {
-        var booking = store.Bookings.FirstOrDefault(x => x.Id == bookingId);
+        var booking = store.Bookings.FirstOrDefault(x =>
+            x.Id == bookingId &&
+            x.UserId == userId);
+
         if (booking is null)
         {
             return Task.FromResult(false);
+        }
+
+        if (booking.Status == "cancelled")
+        {
+            return Task.FromResult(true);
         }
 
         booking.Status = "cancelled";

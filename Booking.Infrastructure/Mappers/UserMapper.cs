@@ -18,11 +18,11 @@ public static class UserMapper
             FullName = user.FullName,
             Email = user.Email,
             Verified = user.Verified,
-            Phone = user.Phone,
-            Country = user.Country,
+            Phone = user.Phone ?? "",
+            Country = user.Country ?? "",
             PreferredCurrency = user.PreferredCurrency,
-            Birthday = user.Birthday.ToString("yyyy-MM-dd"),
-            Favorites = [.. user.Favorites]
+            Birthday = user.Birthday?.ToString("yyyy-MM-dd") ?? "",
+            Favorites = user.Favorites?.ToList() ?? []
         };
     }
 }

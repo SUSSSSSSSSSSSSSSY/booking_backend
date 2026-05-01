@@ -9,6 +9,7 @@ namespace Booking.Contracts.Dtos.Hotels;
 public class RoomDto
 {
     public string Id { get; set; } = default!;
+    public string? Image { get; set; }
     public string Name { get; set; } = default!;
     public string Beds { get; set; } = default!;
     public decimal Price { get; set; }
