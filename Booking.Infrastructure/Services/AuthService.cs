@@ -33,6 +33,11 @@ public class AuthService(
             return Task.FromResult<AuthResponseDto?>(null);
         }
 
+        if (user.IsBlocked)
+        {
+            return Task.FromResult<AuthResponseDto?>(null);
+        }
+
         var passwordIsValid = passwordService.VerifyPassword(user, request.Password);
         if (!passwordIsValid)
         {
@@ -104,6 +109,11 @@ public class AuthService(
         }
         else
         {
+            if (user.IsBlocked)
+            {
+                throw new InvalidOperationException("User is blocked.");
+            }
+
             user.GoogleSubjectId ??= googleUser.SubjectId;
             user.Verified = user.Verified || googleUser.EmailVerified;
             user.PictureUrl ??= googleUser.PictureUrl;

@@ -1,12 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Booking.Contracts.Dtos.Admin;
 
-namespace Booking.Application.Abstractions.Admin
+namespace Booking.Application.Abstractions.Admin;
+
+public interface IAdminReviewService
 {
-    internal class IAdminReviewService
-    {
-    }
+    Task<IReadOnlyList<AdminReviewDto>> GetAllAsync(
+        string? hotelId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<AdminReviewDto?> GetByIdAsync(
+        string reviewId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteAsync(
+        string reviewId,
+        CancellationToken cancellationToken = default);
 }

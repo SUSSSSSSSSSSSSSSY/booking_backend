@@ -1,12 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Booking.Contracts.Dtos.Admin;
 
-namespace Booking.Application.Abstractions.Admin
+namespace Booking.Application.Abstractions.Admin;
+
+public interface IAdminBookingService
 {
-    internal class IAdminBookingService
-    {
-    }
+    Task<IReadOnlyList<AdminBookingDto>> GetAllAsync(
+        string? status = null,
+        CancellationToken cancellationToken = default);
+
+    Task<AdminBookingDto?> GetByIdAsync(
+        string bookingId,
+        CancellationToken cancellationToken = default);
+
+    Task<AdminBookingDto?> CancelAsync(
+        string bookingId,
+        CancellationToken cancellationToken = default);
 }

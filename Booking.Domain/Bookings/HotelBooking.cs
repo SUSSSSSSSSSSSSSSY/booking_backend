@@ -18,4 +18,5 @@ public class HotelBooking
     public string Status { get; set; } = default!;
     public decimal TotalPrice { get; set; }
     public string Currency { get; set; } = default!;
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }

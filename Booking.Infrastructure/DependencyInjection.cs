@@ -49,6 +49,9 @@ public static class DependencyInjection
             services.AddSingleton<IBookingService, BookingService>();
             services.AddSingleton<IAuthService, AuthService>();
             services.AddSingleton<IAdminHotelService, AdminHotelService>();
+            services.AddSingleton<IAdminUserService, AdminUserService>();
+            services.AddSingleton<IAdminBookingService, AdminBookingService>();
+            services.AddSingleton<IAdminReviewService, AdminReviewService>();
         }
 
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();

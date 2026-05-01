@@ -1,12 +1,79 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Booking.Application.Abstractions.Admin;
+using Booking.Contracts.Dtos.Admin;
+using Booking.Infrastructure.Mappers;
+using Booking.Infrastructure.Storage;
 
-namespace Booking.Infrastructure.Services.Admin
+namespace Booking.Infrastructure.Services.Admin;
+
+public class AdminReviewService(InMemoryStore store) : IAdminReviewService
 {
-    internal class AdminReviewService
+    public Task<IReadOnlyList<AdminReviewDto>> GetAllAsync(
+        string? hotelId = null,
+        CancellationToken cancellationToken = default)
     {
+        var query = store.Reviews.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(hotelId))
+        {
+            query = query.Where(x => x.HotelId == hotelId);
+        }
+
+        var result = query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(MapReview)
+            .ToList();
+
+        return Task.FromResult<IReadOnlyList<AdminReviewDto>>(result);
+    }
+
+    public Task<AdminReviewDto?> GetByIdAsync(
+        string reviewId,
+        CancellationToken cancellationToken = default)
+    {
+        var review = store.Reviews.FirstOrDefault(x => x.Id == reviewId);
+
+        if (review is null)
+        {
+            return Task.FromResult<AdminReviewDto?>(null);
+        }
+
+        return Task.FromResult<AdminReviewDto?>(MapReview(review));
+    }
+
+    public Task<bool> DeleteAsync(
+        string reviewId,
+        CancellationToken cancellationToken = default)
+    {
+        var review = store.Reviews.FirstOrDefault(x => x.Id == reviewId);
+
+        if (review is null)
+        {
+            return Task.FromResult(false);
+        }
+
+        store.Reviews.Remove(review);
+
+        var hotel = store.Hotels.FirstOrDefault(x => x.Id == review.HotelId);
+
+        if (hotel is not null)
+        {
+            var hotelReviews = store.Reviews
+                .Where(x => x.HotelId == hotel.Id)
+                .ToList();
+
+            hotel.ReviewCount = hotelReviews.Count;
+
+            hotel.Rating = hotelReviews.Count == 0
+                ? 0
+                : Math.Round(hotelReviews.Average(x => x.Rating), 1);
+        }
+
+        return Task.FromResult(true);
+    }
+
+    private AdminReviewDto MapReview(Booking.Domain.Reviews.Review review)
+    {
+        var hotel = store.Hotels.FirstOrDefault(x => x.Id == review.HotelId);
+        return review.ToAdminDto(hotel);
     }
 }
