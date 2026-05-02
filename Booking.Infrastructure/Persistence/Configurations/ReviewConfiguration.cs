@@ -1,4 +1,6 @@
-﻿using Booking.Domain.Reviews;
+﻿using Booking.Domain.Hotels;
+using Booking.Domain.Reviews;
+using Booking.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -19,6 +21,10 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
             .HasMaxLength(64)
             .IsRequired();
 
+        builder.Property(x => x.UserId)
+            .HasMaxLength(64)
+            .IsRequired(false);
+
         builder.Property(x => x.Author)
             .HasMaxLength(200)
             .IsRequired();
@@ -27,9 +33,19 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
             .HasMaxLength(4000)
             .IsRequired();
 
-        builder.HasOne<Booking.Domain.Hotels.Hotel>()
+        builder.HasOne<Hotel>()
             .WithMany()
             .HasForeignKey(x => x.HotelId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(x => x.HotelId);
+        builder.HasIndex(x => x.UserId);
+        builder.HasIndex(x => x.IsDeleted);
     }
 }

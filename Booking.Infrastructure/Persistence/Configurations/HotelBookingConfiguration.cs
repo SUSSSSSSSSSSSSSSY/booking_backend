@@ -1,4 +1,6 @@
 ﻿using Booking.Domain.Bookings;
+using Booking.Domain.Hotels;
+using Booking.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -38,19 +40,24 @@ public class HotelBookingConfiguration : IEntityTypeConfiguration<HotelBooking>
             .HasMaxLength(10)
             .IsRequired();
 
-        builder.HasOne<Booking.Domain.Users.AppUser>()
+        builder.HasOne<AppUser>()
             .WithMany()
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<Booking.Domain.Hotels.Hotel>()
+        builder.HasOne<Hotel>()
             .WithMany()
             .HasForeignKey(x => x.HotelId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Booking.Domain.Hotels.Room>()
+        builder.HasOne<Room>()
             .WithMany()
             .HasForeignKey(x => x.RoomId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => x.UserId);
+        builder.HasIndex(x => x.HotelId);
+        builder.HasIndex(x => x.RoomId);
+        builder.HasIndex(x => x.Status);
     }
 }

@@ -16,4 +16,6 @@ public class Room
     public string Beds { get; set; } = default!;
     public decimal Price { get; set; }
     public bool FreeCancellation { get; set; }
+
+    public bool IsDeleted { get; set; }
 }

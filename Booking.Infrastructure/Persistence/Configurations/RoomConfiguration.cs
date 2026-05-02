@@ -32,5 +32,8 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
 
         builder.Property(x => x.Price)
             .HasColumnType("numeric(10,2)");
+
+        builder.HasIndex(x => x.HotelId);
+        builder.HasIndex(x => x.IsDeleted);
     }
 }

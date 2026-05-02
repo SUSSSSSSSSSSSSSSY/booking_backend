@@ -29,6 +29,10 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         builder.Property(x => x.PasswordHash)
             .HasMaxLength(1000);
 
+        builder.Property(x => x.Role)
+            .HasMaxLength(50)
+            .IsRequired();
+
         builder.Property(x => x.Phone)
             .HasMaxLength(50);
 

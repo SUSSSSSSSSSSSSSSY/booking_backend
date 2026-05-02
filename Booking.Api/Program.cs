@@ -67,6 +67,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Booking.Api.Auth;
 using Booking.Application.Abstractions;
+using Booking.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -164,7 +166,7 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "http://localhost:3000",
                 "http://localhost:5173"
-            // позже сюда добавишь URL Azure Static Web Apps frontend
+            //  URL Azure Static Web Apps frontend
             // "https://your-frontend.azurestaticapps.net"
             )
             .AllowAnyHeader()
@@ -178,6 +180,20 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
+
+var usePostgres = bool.TryParse(
+    builder.Configuration["Persistence:UsePostgres"],
+    out var parsedUsePostgres
+) && parsedUsePostgres;
+
+if (usePostgres)
+{
+    using var scope = app.Services.CreateScope();
+
+    var dbContext = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+
+    await DatabaseSeeder.SeedAsync(dbContext);
+}
 
 app.UseSwagger();
 app.UseSwaggerUI();

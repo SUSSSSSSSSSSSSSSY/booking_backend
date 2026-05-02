@@ -21,10 +21,16 @@ public class Hotel
 
     public List<string> Tags { get; set; } = [];
     public List<string> Amenities { get; set; } = [];
+
     public string Description { get; set; } = default!;
+
     public List<string> Images { get; set; } = [];
 
     public List<ScoreItem> ScoreItems { get; set; } = [];
     public List<FacilityGroup> Facilities { get; set; } = [];
+
     public List<Room> Rooms { get; set; } = [];
+
+    public bool IsDeleted { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }
