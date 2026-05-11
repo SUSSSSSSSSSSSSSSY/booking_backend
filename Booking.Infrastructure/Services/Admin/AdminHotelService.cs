@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions.Admin;
+using Booking.Contracts.Common;
 using Booking.Contracts.Dtos.Hotels;
 using Booking.Contracts.Requests.Admin;
 using Booking.Domain.Hotels;
@@ -9,13 +10,33 @@ namespace Booking.Infrastructure.Services.Admin;
 
 public class AdminHotelService(InMemoryStore store) : IAdminHotelService
 {
-    public Task<IReadOnlyList<HotelDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public Task<PagedResult<HotelDto>> GetAllAsync(
+    PaginationRequest pagination,
+    CancellationToken cancellationToken = default)
     {
-        var hotels = store.Hotels
+        pagination.Normalize();
+
+        var query = store.Hotels
+            .OrderBy(x => x.IsDeleted)
+            .ThenBy(x => x.City)
+            .ThenBy(x => x.Name)
+            .AsQueryable();
+
+        var totalCount = query.Count();
+
+        var items = query
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .Select(x => x.ToDto())
             .ToList();
 
-        return Task.FromResult<IReadOnlyList<HotelDto>>(hotels);
+        var result = PagedResult<HotelDto>.Create(
+            items,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
+
+        return Task.FromResult(result);
     }
 
     public Task<HotelDto?> GetByIdAsync(string hotelId, CancellationToken cancellationToken = default)

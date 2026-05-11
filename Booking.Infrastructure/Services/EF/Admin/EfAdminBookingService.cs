@@ -4,15 +4,19 @@ using Booking.Domain.Bookings;
 using Booking.Infrastructure.Mappers;
 using Booking.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Booking.Contracts.Common;
 
 namespace Booking.Infrastructure.Services.Ef.Admin;
 
 public class EfAdminBookingService(BookingDbContext dbContext) : IAdminBookingService
 {
-    public async Task<IReadOnlyList<AdminBookingDto>> GetAllAsync(
-        string? status = null,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedResult<AdminBookingDto>> GetAllAsync(
+    PaginationRequest pagination,
+    string? status = null,
+    CancellationToken cancellationToken = default)
     {
+        pagination.Normalize();
+
         var query = dbContext.Bookings
             .AsNoTracking()
             .AsQueryable();
@@ -23,11 +27,22 @@ public class EfAdminBookingService(BookingDbContext dbContext) : IAdminBookingSe
             query = query.Where(x => x.Status.ToLower() == normalizedStatus);
         }
 
+        query = query.OrderByDescending(x => x.CreatedAtUtc);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
         var bookings = await query
-            .OrderByDescending(x => x.CreatedAtUtc)
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .ToListAsync(cancellationToken);
 
-        return await MapBookingsAsync(bookings, cancellationToken);
+        var items = await MapBookingsAsync(bookings, cancellationToken);
+
+        return PagedResult<AdminBookingDto>.Create(
+            items,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
     }
 
     public async Task<AdminBookingDto?> GetByIdAsync(

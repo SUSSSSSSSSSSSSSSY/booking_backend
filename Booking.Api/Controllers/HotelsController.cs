@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions;
+using Booking.Contracts.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.Api.Controllers;
@@ -8,27 +9,36 @@ namespace Booking.Api.Controllers;
 public class HotelsController(IHotelService hotelService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? city, [FromQuery] string? country, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] PaginationRequest pagination,
+        CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(city) || !string.IsNullOrWhiteSpace(country))
-        {
-            var filtered = await hotelService.SearchAsync(city, country, cancellationToken);
-            return Ok(filtered);
-        }
-
-        var hotels = await hotelService.GetAllAsync(cancellationToken);
+        var hotels = await hotelService.GetAllAsync(pagination, cancellationToken);
         return Ok(hotels);
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById(
+        string id,
+        CancellationToken cancellationToken)
     {
         var hotel = await hotelService.GetByIdAsync(id, cancellationToken);
+
         if (hotel is null)
         {
-            return NotFound();
+            return NotFound(new { message = "Hotel not found." });
         }
 
         return Ok(hotel);
+    }
+
+    [HttpGet("search")]
+    public async Task<IActionResult> Search(
+        [FromQuery] string? city,
+        [FromQuery] string? country,
+        CancellationToken cancellationToken)
+    {
+        var hotels = await hotelService.SearchAsync(city, country, cancellationToken);
+        return Ok(hotels);
     }
 }

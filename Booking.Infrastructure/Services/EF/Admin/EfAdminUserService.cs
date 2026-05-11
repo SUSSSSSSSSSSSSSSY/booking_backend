@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions.Admin;
+using Booking.Contracts.Common;
 using Booking.Contracts.Dtos.Admin;
 using Booking.Contracts.Requests.Admin;
 using Booking.Infrastructure.Mappers;
@@ -15,17 +16,33 @@ public class EfAdminUserService(BookingDbContext dbContext) : IAdminUserService
         "Admin"
     };
 
-    public async Task<IReadOnlyList<AdminUserDto>> GetAllAsync(
+    public async Task<PagedResult<AdminUserDto>> GetAllAsync(
+        PaginationRequest pagination,
         CancellationToken cancellationToken = default)
     {
-        var users = await dbContext.Users
+        pagination.Normalize();
+
+        var query = dbContext.Users
             .AsNoTracking()
             .OrderByDescending(x => x.CreatedAtUtc)
+            .AsQueryable();
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var users = await query
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .ToListAsync(cancellationToken);
 
-        return users
+        var items = users
             .Select(x => x.ToAdminDto())
             .ToList();
+
+        return PagedResult<AdminUserDto>.Create(
+            items,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
     }
 
     public async Task<AdminUserDto?> GetByIdAsync(

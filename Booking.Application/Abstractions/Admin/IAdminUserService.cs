@@ -1,11 +1,14 @@
-﻿using Booking.Contracts.Dtos.Admin;
+﻿using Booking.Contracts.Common;
+using Booking.Contracts.Dtos.Admin;
 using Booking.Contracts.Requests.Admin;
 
 namespace Booking.Application.Abstractions.Admin;
 
 public interface IAdminUserService
 {
-    Task<IReadOnlyList<AdminUserDto>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<AdminUserDto>> GetAllAsync(
+        PaginationRequest pagination,
+        CancellationToken cancellationToken = default);
 
     Task<AdminUserDto?> GetByIdAsync(
         string userId,

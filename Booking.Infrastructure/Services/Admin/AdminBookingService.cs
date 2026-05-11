@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions.Admin;
+using Booking.Contracts.Common;
 using Booking.Contracts.Dtos.Admin;
 using Booking.Infrastructure.Mappers;
 using Booking.Infrastructure.Storage;
@@ -7,10 +8,13 @@ namespace Booking.Infrastructure.Services.Admin;
 
 public class AdminBookingService(InMemoryStore store) : IAdminBookingService
 {
-    public Task<IReadOnlyList<AdminBookingDto>> GetAllAsync(
-        string? status = null,
-        CancellationToken cancellationToken = default)
+    public Task<PagedResult<AdminBookingDto>> GetAllAsync(
+    PaginationRequest pagination,
+    string? status = null,
+    CancellationToken cancellationToken = default)
     {
+        pagination.Normalize();
+
         var query = store.Bookings.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(status))
@@ -19,12 +23,23 @@ public class AdminBookingService(InMemoryStore store) : IAdminBookingService
                 x.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
         }
 
-        var result = query
-            .OrderByDescending(x => x.CreatedAtUtc)
+        query = query.OrderByDescending(x => x.CreatedAtUtc);
+
+        var totalCount = query.Count();
+
+        var items = query
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .Select(MapBooking)
             .ToList();
 
-        return Task.FromResult<IReadOnlyList<AdminBookingDto>>(result);
+        var result = PagedResult<AdminBookingDto>.Create(
+            items,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
+
+        return Task.FromResult(result);
     }
 
     public Task<AdminBookingDto?> GetByIdAsync(

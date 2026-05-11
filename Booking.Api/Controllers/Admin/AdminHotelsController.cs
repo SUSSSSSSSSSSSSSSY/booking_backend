@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions.Admin;
+using Booking.Contracts.Common;
 using Booking.Contracts.Requests.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,9 +12,11 @@ namespace Booking.Api.Controllers.Admin;
 public class AdminHotelsController(IAdminHotelService adminHotelService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+    [FromQuery] PaginationRequest pagination,
+    CancellationToken cancellationToken)
     {
-        var hotels = await adminHotelService.GetAllAsync(cancellationToken);
+        var hotels = await adminHotelService.GetAllAsync(pagination, cancellationToken);
         return Ok(hotels);
     }
 

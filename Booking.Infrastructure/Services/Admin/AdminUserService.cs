@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions.Admin;
+using Booking.Contracts.Common;
 using Booking.Contracts.Dtos.Admin;
 using Booking.Contracts.Requests.Admin;
 using Booking.Infrastructure.Mappers;
@@ -14,15 +15,31 @@ public class AdminUserService(InMemoryStore store) : IAdminUserService
         "Admin"
     };
 
-    public Task<IReadOnlyList<AdminUserDto>> GetAllAsync(
+    public Task<PagedResult<AdminUserDto>> GetAllAsync(
+        PaginationRequest pagination,
         CancellationToken cancellationToken = default)
     {
-        var users = store.Users
+        pagination.Normalize();
+
+        var query = store.Users
             .OrderByDescending(x => x.CreatedAtUtc)
+            .AsQueryable();
+
+        var totalCount = query.Count();
+
+        var items = query
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .Select(x => x.ToAdminDto())
             .ToList();
 
-        return Task.FromResult<IReadOnlyList<AdminUserDto>>(users);
+        var result = PagedResult<AdminUserDto>.Create(
+            items,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
+
+        return Task.FromResult(result);
     }
 
     public Task<AdminUserDto?> GetByIdAsync(

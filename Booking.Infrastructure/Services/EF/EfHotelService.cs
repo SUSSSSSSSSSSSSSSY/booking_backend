@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions;
+using Booking.Contracts.Common;
 using Booking.Contracts.Dtos.Hotels;
 using Booking.Infrastructure.Mappers;
 using Booking.Infrastructure.Persistence;
@@ -8,19 +9,36 @@ namespace Booking.Infrastructure.Services.Ef;
 
 public class EfHotelService(BookingDbContext dbContext) : IHotelService
 {
-    public async Task<IReadOnlyList<HotelDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<HotelDto>> GetAllAsync(
+    PaginationRequest pagination,
+    CancellationToken cancellationToken = default)
     {
-        var hotels = await dbContext.Hotels
+        pagination.Normalize();
+
+        var query = dbContext.Hotels
             .AsNoTracking()
             .Include(x => x.Rooms.Where(r => !r.IsDeleted))
             .Where(x => !x.IsDeleted)
             .OrderBy(x => x.City)
             .ThenBy(x => x.Name)
+            .AsQueryable();
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var hotels = await query
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .ToListAsync(cancellationToken);
 
-        return hotels
+        var items = hotels
             .Select(x => x.ToDto())
             .ToList();
+
+        return PagedResult<HotelDto>.Create(
+            items,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
     }
 
     public async Task<HotelDto?> GetByIdAsync(string hotelId, CancellationToken cancellationToken = default)

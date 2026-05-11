@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions.Admin;
+using Booking.Contracts.Common;
 using Booking.Contracts.Dtos.Admin;
 using Booking.Infrastructure.Mappers;
 using Booking.Infrastructure.Storage;
@@ -7,10 +8,13 @@ namespace Booking.Infrastructure.Services.Admin;
 
 public class AdminReviewService(InMemoryStore store) : IAdminReviewService
 {
-    public Task<IReadOnlyList<AdminReviewDto>> GetAllAsync(
-        string? hotelId = null,
-        CancellationToken cancellationToken = default)
+    public Task<PagedResult<AdminReviewDto>> GetAllAsync(
+    PaginationRequest pagination,
+    string? hotelId = null,
+    CancellationToken cancellationToken = default)
     {
+        pagination.Normalize();
+
         var query = store.Reviews.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(hotelId))
@@ -18,12 +22,23 @@ public class AdminReviewService(InMemoryStore store) : IAdminReviewService
             query = query.Where(x => x.HotelId == hotelId);
         }
 
-        var result = query
-            .OrderByDescending(x => x.CreatedAtUtc)
+        query = query.OrderByDescending(x => x.CreatedAtUtc);
+
+        var totalCount = query.Count();
+
+        var items = query
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .Select(MapReview)
             .ToList();
 
-        return Task.FromResult<IReadOnlyList<AdminReviewDto>>(result);
+        var result = PagedResult<AdminReviewDto>.Create(
+            items,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
+
+        return Task.FromResult(result);
     }
 
     public Task<AdminReviewDto?> GetByIdAsync(

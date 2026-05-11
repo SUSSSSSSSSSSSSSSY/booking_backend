@@ -19,7 +19,7 @@ public class EfAuthService(
 {
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-    public async Task<AuthResponseDto?> LoginAsync(
+    public async Task<AuthResult> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -32,22 +32,24 @@ public class EfAuthService(
 
         if (user is null)
         {
-            return null;
+            return AuthResult.Failure(AuthErrorCode.InvalidCredentials);
         }
 
         if (user.IsBlocked)
         {
-            return null;
+            return AuthResult.Failure(AuthErrorCode.UserBlocked);
         }
 
         var passwordIsValid = passwordService.VerifyPassword(user, request.Password);
 
         if (!passwordIsValid)
         {
-            return null;
+            return AuthResult.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        return await CreateAuthResponseAsync(user, cancellationToken);
+        var response = await CreateAuthResponseAsync(user, cancellationToken);
+
+        return AuthResult.Success(response);
     }
 
     public async Task<AuthResponseDto> RegisterAsync(

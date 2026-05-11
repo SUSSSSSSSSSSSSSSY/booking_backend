@@ -1,10 +1,12 @@
-﻿using Booking.Contracts.Dtos.Admin;
+﻿using Booking.Contracts.Common;
+using Booking.Contracts.Dtos.Admin;
 
 namespace Booking.Application.Abstractions.Admin;
 
 public interface IAdminReviewService
 {
-    Task<IReadOnlyList<AdminReviewDto>> GetAllAsync(
+    Task<PagedResult<AdminReviewDto>> GetAllAsync(
+        PaginationRequest pagination,
         string? hotelId = null,
         CancellationToken cancellationToken = default);
 

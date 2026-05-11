@@ -23,29 +23,33 @@ public class AuthService(
 {
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-    public Task<AuthResponseDto?> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
+    public Task<AuthResult> LoginAsync(
+    LoginRequest request,
+    CancellationToken cancellationToken = default)
     {
         var user = store.Users.FirstOrDefault(x =>
             x.Email.Equals(request.Email, StringComparison.OrdinalIgnoreCase));
 
         if (user is null)
         {
-            return Task.FromResult<AuthResponseDto?>(null);
+            return Task.FromResult(AuthResult.Failure(AuthErrorCode.InvalidCredentials));
         }
 
         if (user.IsBlocked)
         {
-            return Task.FromResult<AuthResponseDto?>(null);
+            return Task.FromResult(AuthResult.Failure(AuthErrorCode.UserBlocked));
         }
 
         var passwordIsValid = passwordService.VerifyPassword(user, request.Password);
+
         if (!passwordIsValid)
         {
-            return Task.FromResult<AuthResponseDto?>(null);
+            return Task.FromResult(AuthResult.Failure(AuthErrorCode.InvalidCredentials));
         }
 
         var response = CreateAuthResponse(user);
-        return Task.FromResult<AuthResponseDto?>(response);
+
+        return Task.FromResult(AuthResult.Success(response));
     }
 
     public Task<AuthResponseDto> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)

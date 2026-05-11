@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions.Admin;
+using Booking.Contracts.Common;
 using Booking.Contracts.Dtos.Admin;
 using Booking.Domain.Reviews;
 using Booking.Infrastructure.Mappers;
@@ -9,10 +10,13 @@ namespace Booking.Infrastructure.Services.Ef.Admin;
 
 public class EfAdminReviewService(BookingDbContext dbContext) : IAdminReviewService
 {
-    public async Task<IReadOnlyList<AdminReviewDto>> GetAllAsync(
-        string? hotelId = null,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedResult<AdminReviewDto>> GetAllAsync(
+    PaginationRequest pagination,
+    string? hotelId = null,
+    CancellationToken cancellationToken = default)
     {
+        pagination.Normalize();
+
         var query = dbContext.Reviews
             .AsNoTracking()
             .Where(x => !x.IsDeleted)
@@ -23,11 +27,22 @@ public class EfAdminReviewService(BookingDbContext dbContext) : IAdminReviewServ
             query = query.Where(x => x.HotelId == hotelId);
         }
 
+        query = query.OrderByDescending(x => x.CreatedAtUtc);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
         var reviews = await query
-            .OrderByDescending(x => x.CreatedAtUtc)
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .ToListAsync(cancellationToken);
 
-        return await MapReviewsAsync(reviews, cancellationToken);
+        var items = await MapReviewsAsync(reviews, cancellationToken);
+
+        return PagedResult<AdminReviewDto>.Create(
+            items,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
     }
 
     public async Task<AdminReviewDto?> GetByIdAsync(

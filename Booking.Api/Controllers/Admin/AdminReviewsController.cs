@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions.Admin;
+using Booking.Contracts.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,10 +12,15 @@ public class AdminReviewsController(IAdminReviewService adminReviewService) : Co
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(
+        [FromQuery] PaginationRequest pagination,
         [FromQuery] string? hotelId,
         CancellationToken cancellationToken)
     {
-        var reviews = await adminReviewService.GetAllAsync(hotelId, cancellationToken);
+        var reviews = await adminReviewService.GetAllAsync(
+            pagination,
+            hotelId,
+            cancellationToken);
+
         return Ok(reviews);
     }
 

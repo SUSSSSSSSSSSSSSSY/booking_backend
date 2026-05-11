@@ -1,5 +1,6 @@
 ﻿using Booking.Application.Abstractions;
 using Booking.Contracts.Requests.Auth;
+using Booking.Contracts.Responses.Auth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.Api.Controllers;
@@ -31,12 +32,25 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var result = await authService.LoginAsync(request, cancellationToken);
 
-        if (result is null)
+        if (result.Succeeded && result.Data is not null)
         {
-            return Unauthorized(new { message = "Invalid email or password." });
+            return Ok(result.Data);
         }
 
-        return Ok(result);
+        return result.ErrorCode switch
+        {
+            AuthErrorCode.UserBlocked => StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = "USER_BLOCKED",
+                message = "This account has been blocked."
+            }),
+
+            _ => Unauthorized(new
+            {
+                code = "INVALID_CREDENTIALS",
+                message = "Invalid email or password."
+            })
+        };
     }
 
     [HttpPost("google")]
