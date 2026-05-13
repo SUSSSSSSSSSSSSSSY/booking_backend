@@ -1,5 +1,6 @@
 ﻿using Booking.Application.Abstractions;
 using Booking.Contracts.Common;
+using Booking.Contracts.Requests.Hotels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.Api.Controllers;
@@ -34,11 +35,10 @@ public class HotelsController(IHotelService hotelService) : ControllerBase
 
     [HttpGet("search")]
     public async Task<IActionResult> Search(
-        [FromQuery] string? city,
-        [FromQuery] string? country,
+        [FromQuery] HotelSearchRequest request,
         CancellationToken cancellationToken)
     {
-        var hotels = await hotelService.SearchAsync(city, country, cancellationToken);
+        var hotels = await hotelService.SearchAsync(request, cancellationToken);
         return Ok(hotels);
     }
 }

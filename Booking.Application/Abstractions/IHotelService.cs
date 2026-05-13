@@ -1,5 +1,6 @@
 ﻿using Booking.Contracts.Common;
 using Booking.Contracts.Dtos.Hotels;
+using Booking.Contracts.Requests.Hotels;
 
 namespace Booking.Application.Abstractions;
 
@@ -13,8 +14,7 @@ public interface IHotelService
         string hotelId,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<HotelDto>> SearchAsync(
-        string? city,
-        string? country,
+    Task<PagedResult<HotelDto>> SearchAsync(
+        HotelSearchRequest request,
         CancellationToken cancellationToken = default);
 }
