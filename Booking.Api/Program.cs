@@ -181,16 +181,11 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-var usePostgres = bool.TryParse(
-    builder.Configuration["Persistence:UsePostgres"],
-    out var parsedUsePostgres
-) && parsedUsePostgres;
-
-if (usePostgres)
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
-
     var dbContext = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+
+    await dbContext.Database.MigrateAsync();
 
     await DatabaseSeeder.SeedAsync(dbContext);
 }
