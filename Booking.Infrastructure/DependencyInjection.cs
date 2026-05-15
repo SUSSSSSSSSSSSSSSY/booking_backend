@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<IUserService, EfUserService>();
         services.AddScoped<IAuthService, EfAuthService>();
         services.AddScoped<IBookingService, EfBookingService>();
+        services.AddScoped<IRoomAvailabilityService, EfRoomAvailabilityService>();
         services.AddScoped<IOwnerBookingService, EfOwnerBookingService>();
         services.AddScoped<IReviewService, EfReviewService>();
 

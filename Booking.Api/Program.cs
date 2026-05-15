@@ -185,8 +185,6 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
 
-    await dbContext.Database.MigrateAsync();
-
     await DatabaseSeeder.SeedAsync(dbContext);
 }
 
