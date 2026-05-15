@@ -60,6 +60,14 @@ public class HotelConfiguration : IEntityTypeConfiguration<Hotel>
             .HasForeignKey(x => x.HotelId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Property(x => x.OwnerUserId)
+            .HasMaxLength(64);
+
+        builder.Property(x => x.IsUserSubmitted)
+            .IsRequired();
+
+        builder.HasIndex(x => x.OwnerUserId);
+
         builder.HasIndex(x => x.City);
         builder.HasIndex(x => x.Country);
         builder.HasIndex(x => x.IsDeleted);

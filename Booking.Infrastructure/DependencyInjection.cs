@@ -58,13 +58,16 @@ public static class DependencyInjection
             services.AddScoped<IAdminUserService, EfAdminUserService>();
             services.AddScoped<IAdminBookingService, EfAdminBookingService>();
             services.AddScoped<IAdminReviewService, EfAdminReviewService>();
+
+            services.AddScoped<IHotelSubmissionService, EfHotelSubmissionService>();
+            services.AddScoped<IAdminHotelSubmissionService, EfAdminHotelSubmissionService>();
+            services.AddScoped<IOwnerBookingService, EfOwnerBookingService>();
         }
         else
         {
             services.AddSingleton<IHotelService, HotelService>();
             services.AddSingleton<IReviewService, ReviewService>();
             services.AddSingleton<IUserService, UserService>();
-            services.AddSingleton<IBookingService, BookingService>();
             services.AddSingleton<IAuthService, AuthService>();
 
             services.AddSingleton<IAdminHotelService, AdminHotelService>();

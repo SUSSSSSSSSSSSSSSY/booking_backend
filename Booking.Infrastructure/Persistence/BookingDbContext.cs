@@ -4,6 +4,7 @@ using Booking.Domain.Reviews;
 using Booking.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
+
 namespace Booking.Infrastructure.Persistence;
 
 public class BookingDbContext(DbContextOptions<BookingDbContext> options)
@@ -13,6 +14,7 @@ public class BookingDbContext(DbContextOptions<BookingDbContext> options)
     public DbSet<UserRefreshToken> RefreshTokens => Set<UserRefreshToken>();
 
     public DbSet<Hotel> Hotels => Set<Hotel>();
+    public DbSet<HotelSubmission> HotelSubmissions => Set<HotelSubmission>();
     public DbSet<Room> Rooms => Set<Room>();
 
     public DbSet<Review> Reviews => Set<Review>();

@@ -24,4 +24,9 @@ public class AdminBookingDto
     public string Currency { get; set; } = default!;
 
     public DateTime CreatedAtUtc { get; set; }
+
+    public string? HotelOwnerUserId { get; set; }
+    public DateTime? OwnerRespondedAtUtc { get; set; }
+    public DateTime? CancelledAtUtc { get; set; }
+    public string? CancellationReason { get; set; }
 }

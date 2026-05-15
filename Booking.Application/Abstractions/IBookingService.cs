@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Booking.Contracts.Dtos.Bookings;
+﻿using Booking.Contracts.Dtos.Bookings;
 using Booking.Contracts.Requests.Bookings;
 
 namespace Booking.Application.Abstractions;
@@ -15,12 +9,35 @@ public interface IBookingService
         string userId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<BookingDto>> GetUpcomingByUserIdAsync(
+        string userId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<BookingDto>> GetHistoryByUserIdAsync(
+        string userId,
+        CancellationToken cancellationToken = default);
+
+    Task<BookingDto?> GetByIdForUserAsync(
+        string userId,
+        string bookingId,
+        CancellationToken cancellationToken = default);
+
     Task<BookingDto> CreateAsync(
         string userId,
         CreateBookingRequest request,
         CancellationToken cancellationToken = default);
 
     Task<bool> CancelAsync(
+        string userId,
+        string bookingId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> RestoreAsync(
+        string userId,
+        string bookingId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> HideForUserAsync(
         string userId,
         string bookingId,
         CancellationToken cancellationToken = default);

@@ -36,7 +36,12 @@ public static class AdminBookingMapper
             TotalPrice = booking.TotalPrice,
             Currency = booking.Currency,
 
-            CreatedAtUtc = booking.CreatedAtUtc
+            CreatedAtUtc = booking.CreatedAtUtc,
+
+            HotelOwnerUserId = booking.HotelOwnerUserId,
+            OwnerRespondedAtUtc = booking.OwnerRespondedAtUtc,
+            CancelledAtUtc = booking.CancelledAtUtc,
+            CancellationReason = booking.CancellationReason
         };
     }
 }

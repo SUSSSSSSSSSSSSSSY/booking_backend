@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Abstractions;
+using Booking.Contracts.Common;
 using Booking.Contracts.Requests.Bookings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,52 +7,45 @@ using Microsoft.AspNetCore.Mvc;
 namespace Booking.Api.Controllers;
 
 [ApiController]
-[Route("api/bookings")]
+[Route("api/owner/bookings")]
 [Authorize]
-public class BookingsController(
-    IBookingService bookingService,
+public class OwnerBookingsController(
+    IOwnerBookingService ownerBookingService,
     ICurrentUserService currentUser) : ControllerBase
 {
-    [HttpGet("me")]
-    public async Task<IActionResult> GetMine(CancellationToken cancellationToken)
+    [HttpGet]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] PaginationRequest pagination,
+        [FromQuery] string? status,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(currentUser.UserId))
         {
             return Unauthorized(new { message = "User is not authenticated." });
         }
 
-        var bookings = await bookingService.GetByUserIdAsync(
+        var bookings = await ownerBookingService.GetAllForOwnerAsync(
             currentUser.UserId,
+            pagination,
+            status,
             cancellationToken);
 
         return Ok(bookings);
     }
 
-    [HttpGet("me/upcoming")]
-    public async Task<IActionResult> GetUpcoming(CancellationToken cancellationToken)
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetPending(
+        [FromQuery] PaginationRequest pagination,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(currentUser.UserId))
         {
             return Unauthorized(new { message = "User is not authenticated." });
         }
 
-        var bookings = await bookingService.GetUpcomingByUserIdAsync(
+        var bookings = await ownerBookingService.GetPendingForOwnerAsync(
             currentUser.UserId,
-            cancellationToken);
-
-        return Ok(bookings);
-    }
-
-    [HttpGet("me/history")]
-    public async Task<IActionResult> GetHistory(CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(currentUser.UserId))
-        {
-            return Unauthorized(new { message = "User is not authenticated." });
-        }
-
-        var bookings = await bookingService.GetHistoryByUserIdAsync(
-            currentUser.UserId,
+            pagination,
             cancellationToken);
 
         return Ok(bookings);
@@ -67,7 +61,7 @@ public class BookingsController(
             return Unauthorized(new { message = "User is not authenticated." });
         }
 
-        var booking = await bookingService.GetByIdForUserAsync(
+        var booking = await ownerBookingService.GetByIdForOwnerAsync(
             currentUser.UserId,
             bookingId,
             cancellationToken);
@@ -80,9 +74,9 @@ public class BookingsController(
         return Ok(booking);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Create(
-        [FromBody] CreateBookingRequest request,
+    [HttpPatch("{bookingId}/accept")]
+    public async Task<IActionResult> Accept(
+        string bookingId,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(currentUser.UserId))
@@ -92,15 +86,49 @@ public class BookingsController(
 
         try
         {
-            var booking = await bookingService.CreateAsync(
+            var booking = await ownerBookingService.AcceptAsync(
                 currentUser.UserId,
-                request,
+                bookingId,
                 cancellationToken);
 
-            return CreatedAtAction(
-                nameof(GetById),
-                new { bookingId = booking.Id },
-                booking);
+            if (booking is null)
+            {
+                return NotFound(new { message = "Booking not found." });
+            }
+
+            return Ok(booking);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPatch("{bookingId}/reject")]
+    public async Task<IActionResult> Reject(
+        string bookingId,
+        [FromBody] OwnerBookingDecisionRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(currentUser.UserId))
+        {
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
+        try
+        {
+            var booking = await ownerBookingService.RejectAsync(
+                currentUser.UserId,
+                bookingId,
+                request.Reason,
+                cancellationToken);
+
+            if (booking is null)
+            {
+                return NotFound(new { message = "Booking not found." });
+            }
+
+            return Ok(booking);
         }
         catch (InvalidOperationException ex)
         {
@@ -111,6 +139,7 @@ public class BookingsController(
     [HttpPatch("{bookingId}/cancel")]
     public async Task<IActionResult> Cancel(
         string bookingId,
+        [FromBody] OwnerBookingDecisionRequest request,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(currentUser.UserId))
@@ -118,46 +147,17 @@ public class BookingsController(
             return Unauthorized(new { message = "User is not authenticated." });
         }
 
-        try
-        {
-            var cancelled = await bookingService.CancelAsync(
-                currentUser.UserId,
-                bookingId,
-                cancellationToken);
-
-            if (!cancelled)
-            {
-                return NotFound(new { message = "Booking not found." });
-            }
-
-            return NoContent();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    [HttpDelete("{bookingId}")]
-    public async Task<IActionResult> Hide(
-        string bookingId,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(currentUser.UserId))
-        {
-            return Unauthorized(new { message = "User is not authenticated." });
-        }
-
-        var hidden = await bookingService.HideForUserAsync(
+        var booking = await ownerBookingService.CancelAsync(
             currentUser.UserId,
             bookingId,
+            request.Reason,
             cancellationToken);
 
-        if (!hidden)
+        if (booking is null)
         {
             return NotFound(new { message = "Booking not found." });
         }
 
-        return NoContent();
+        return Ok(booking);
     }
 }

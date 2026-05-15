@@ -294,16 +294,22 @@ public class EfAdminHotelService(BookingDbContext dbContext) : IAdminHotelServic
     }
 
     private async Task RemoveHotelFromFavoritesAsync(
-        string hotelId,
-        CancellationToken cancellationToken)
+    string hotelId,
+    CancellationToken cancellationToken)
     {
-        var usersWithFavorite = await dbContext.Users
-            .Where(x => x.Favorites.Contains(hotelId))
+        var users = await dbContext.Users
             .ToListAsync(cancellationToken);
 
-        foreach (var user in usersWithFavorite)
+        foreach (var user in users)
         {
-            user.Favorites.Remove(hotelId);
+            if (user.Favorites is null || !user.Favorites.Contains(hotelId))
+            {
+                continue;
+            }
+
+            user.Favorites = user.Favorites
+                .Where(x => x != hotelId)
+                .ToList();
         }
     }
 }

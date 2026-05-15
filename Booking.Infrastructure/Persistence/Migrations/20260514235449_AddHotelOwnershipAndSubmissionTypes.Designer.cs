@@ -5,6 +5,7 @@ using Booking.Domain.Hotels;
 using Booking.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -13,9 +14,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Booking.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(BookingDbContext))]
-    partial class BookingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514235449_AddHotelOwnershipAndSubmissionTypes")]
+    partial class AddHotelOwnershipAndSubmissionTypes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,13 +32,6 @@ namespace Booking.Infrastructure.Persistence.Migrations
                     b.Property<string>("Id")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
-
-                    b.Property<string>("CancellationReason")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<DateTime?>("CancelledAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateOnly>("CheckIn")
                         .HasColumnType("date");
@@ -59,16 +55,6 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<string>("HotelOwnerUserId")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<bool>("IsHiddenForUser")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("OwnerRespondedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("RoomId")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -91,15 +77,11 @@ namespace Booking.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("HotelId");
 
-                    b.HasIndex("HotelOwnerUserId");
-
                     b.HasIndex("RoomId");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("RoomId", "CheckIn", "CheckOut");
 
                     b.ToTable("bookings", (string)null);
                 });

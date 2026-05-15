@@ -55,6 +55,23 @@ public class HotelBookingConfiguration : IEntityTypeConfiguration<HotelBooking>
             .HasForeignKey(x => x.RoomId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Property(x => x.HotelOwnerUserId)
+            .HasMaxLength(64);
+
+        builder.Property(x => x.IsHiddenForUser)
+            .IsRequired();
+
+        builder.Property(x => x.CancellationReason)
+            .HasMaxLength(1000);
+
+        builder.Property(x => x.OwnerRespondedAtUtc);
+
+        builder.Property(x => x.CancelledAtUtc);
+
+        builder.HasIndex(x => x.HotelOwnerUserId);
+        builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => new { x.RoomId, x.CheckIn, x.CheckOut });
+
         builder.HasIndex(x => x.UserId);
         builder.HasIndex(x => x.HotelId);
         builder.HasIndex(x => x.RoomId);
