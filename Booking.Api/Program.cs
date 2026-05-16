@@ -69,10 +69,12 @@ using Booking.Api.Auth;
 using Booking.Application.Abstractions;
 using Booking.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Booking.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -154,6 +156,24 @@ builder.Services
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(1)
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs/chat"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -167,10 +187,11 @@ builder.Services.AddCors(options =>
                 "http://localhost:3000",
                 "http://localhost:5173"
             //  URL Azure Static Web Apps frontend
-            // "https://your-frontend.azurestaticapps.net"
+            // "https://frontend.azurestaticapps.net"
             )
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -199,5 +220,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapGet("/ping", () => Results.Ok("pong"));
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

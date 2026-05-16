@@ -2,6 +2,7 @@
 using Booking.Domain.Hotels;
 using Booking.Domain.Reviews;
 using Booking.Domain.Users;
+using Booking.Domain.Chats;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -19,6 +20,9 @@ public class BookingDbContext(DbContextOptions<BookingDbContext> options)
 
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<HotelBooking> Bookings => Set<HotelBooking>();
+
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<ChatThread> ChatThreads => Set<ChatThread>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

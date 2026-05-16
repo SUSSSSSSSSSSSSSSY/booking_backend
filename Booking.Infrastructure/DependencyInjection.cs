@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Booking.Infrastructure.Services.Ef.Admin;
+using Booking.Infrastructure.BackgroundServices;
 using Npgsql;
 
 namespace Booking.Infrastructure;
@@ -56,6 +57,10 @@ public static class DependencyInjection
         services.AddScoped<IAdminBookingService, EfAdminBookingService>();
         services.AddScoped<IAdminReviewService, EfAdminReviewService>();
         services.AddScoped<IAdminHotelSubmissionService, EfAdminHotelSubmissionService>();
+
+        services.AddScoped<IChatService, EfChatService>();
+
+        services.AddHostedService<ExpiredChatCleanupService>();
 
         return services;
     }
